@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String             @id @default(uuid())
+  name               String
+  email              String             @unique
+  password           String
+  phone              String             @unique
+  role               String             @default("user")
+  serialNo           String?            @unique
+  jwt                String?
+  resetPasswordToken String?
+  resetExpiresTime   DateTime?
+  empOrders          Order[]            @relation("employeeOrder")
+  clientOrders       Order[]            @relation("clientOrder")
+  techs              Tech[]
+  importedSupplies   ImportedSupplies[]
+}
+
+model Category {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  products Product[]
+}
+
+model Product {
+  id           String   @id @default(uuid())
+  name         String
+  price        Int
+  description  String?
+  inStock   Boolean
+  category     Category @relation(fields: [categoryName], references: [name], onDelete: Cascade, onUpdate: Cascade)
+  categoryName String
+  orders Order[]
+}
+
+model Order {
+  id         String    @id @default(uuid())
+  date       DateTime
+  duration   String
+  returnDate DateTime
+  totalPrice Int
+  status  Boolean @default(true)
+  creator    User      @relation("employeeOrder", fields: [empId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  empId      String
+  client     User      @relation("clientOrder", fields: [clientId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  clientId   String
+  techs      Tech[]
+  products Product[]
+}
+
+model Tech {
+  id      String @id @unique @default(uuid())
+  price   Int
+  tech    User   @relation(fields: [techId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  techId  String
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orderId String?
+}
+
+model ImportedSupplies {
+  id         String   @id @default(uuid())
+  date       DateTime @default(now())
+  duration   String
+  returnDate DateTime
+  name       String
+  price      Int
+  code        String   @unique 
+  office     User     @relation(fields: [officeId], references: [serialNo], onDelete: Cascade, onUpdate: Cascade)
+  officeId   String
+}
